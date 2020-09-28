@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 
+using Docker.Registry.DotNet.Helpers;
+
 namespace Docker.Registry.DotNet.Authentication
 {
     internal static class AuthenticateParser
@@ -27,7 +29,7 @@ namespace Docker.Registry.DotNet.Authentication
 
         private static string GetKey(string pair)
         {
-            int equalPos = pair.IndexOf("=");
+            int equalPos = pair.IndexOf("=", StringComparison.Ordinal);
 
             if (equalPos < 1)
                 throw new FormatException("No '=' found.");
@@ -37,7 +39,7 @@ namespace Docker.Registry.DotNet.Authentication
 
         private static string GetValue(string pair)
         {
-            int equalPos = pair.IndexOf("=");
+            int equalPos = pair.IndexOf("=", StringComparison.Ordinal);
 
             if (equalPos < 1)
                 throw new FormatException("No '=' found.");

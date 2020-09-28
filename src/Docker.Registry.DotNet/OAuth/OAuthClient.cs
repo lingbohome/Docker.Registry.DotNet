@@ -1,31 +1,37 @@
 ﻿using System;
-using System.IdentityModel.Tokens.Jwt;
 using System.Net.Http;
+using System.Net.Http.Headers;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
+
+using Docker.Registry.DotNet.Helpers;
+
 using Newtonsoft.Json;
 
 namespace Docker.Registry.DotNet.OAuth
 {
-    using System.Net.Http.Headers;
-    using System.Text;
-
     internal class OAuthClient
     {
         private readonly HttpClient _client = new HttpClient();
 
-        private async Task<OAuthToken> GetTokenInnerAsync(string realm, string service, string scope, string username,
-            string password, CancellationToken cancellationToken = new CancellationToken())
+        private async Task<OAuthToken> GetTokenInnerAsync(
+            string realm,
+            string service,
+            string scope,
+            string username,
+            string password,
+            CancellationToken cancellationToken = default)
         {
             var queryString = new QueryString();
 
             queryString.AddIfNotEmpty("service", service);
             queryString.AddIfNotEmpty("scope", scope);
- 
-            UriBuilder builder = new UriBuilder(new Uri(realm))
-            {
-                Query = queryString.GetQueryString()
-            };
+
+            var builder = new UriBuilder(new Uri(realm))
+                          {
+                              Query = queryString.GetQueryString()
+                          };
 
             var request = new HttpRequestMessage(HttpMethod.Get, builder.Uri);
 
@@ -35,17 +41,17 @@ namespace Docker.Registry.DotNet.OAuth
 
                 var bytes = Encoding.UTF8.GetBytes($"{username}:{password}");
 
-                string parameter = Convert.ToBase64String(bytes);
+                var parameter = Convert.ToBase64String(bytes);
 
                 request.Headers.Authorization = new AuthenticationHeaderValue("Basic", parameter);
             }
 
-            using (var response = await _client.SendAsync(request, cancellationToken))
+            using (var response = await this._client.SendAsync(request, cancellationToken))
             {
                 if (!response.IsSuccessStatusCode)
-                    throw new UnauthorizedAccessException("Unable to authenticate..");
+                    throw new UnauthorizedAccessException("Unable to authenticate.");
 
-                string body = await response.Content.ReadAsStringAsync();
+                var body = await response.Content.ReadAsStringAsync();
 
                 var token = JsonConvert.DeserializeObject<OAuthToken>(body);
 
@@ -53,14 +59,30 @@ namespace Docker.Registry.DotNet.OAuth
             }
         }
 
-        public Task<OAuthToken> GetTokenAsync(string realm, string service, string scope, CancellationToken cancellationToken = new CancellationToken())
+        public Task<OAuthToken> GetTokenAsync(
+            string realm,
+            string service,
+            string scope,
+            CancellationToken cancellationToken = default)
         {
-            return GetTokenInnerAsync(realm, service, scope, null, null, cancellationToken);
+            return this.GetTokenInnerAsync(realm, service, scope, null, null, cancellationToken);
         }
 
-        public Task<OAuthToken> GetTokenAsync(string realm, string service, string scope, string username, string password, CancellationToken cancellationToken = new CancellationToken())
+        public Task<OAuthToken> GetTokenAsync(
+            string realm,
+            string service,
+            string scope,
+            string username,
+            string password,
+            CancellationToken cancellationToken = default)
         {
-            return GetTokenInnerAsync(realm, service, scope, username, password, cancellationToken);
+            return this.GetTokenInnerAsync(
+                realm,
+                service,
+                scope,
+                username,
+                password,
+                cancellationToken);
         }
     }
 }
